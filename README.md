@@ -20,9 +20,9 @@ To use it, declare your user and app keys:
     $eventbrite = Eventbrite($userKey, $appKey);
 
 This library caches by default, and you can indicate your preferences for where
-to cache and for how long:
+to cache and for how long with the `cache()` method. For example, to cache files
+in `/tmp` for one day:
 
-    // Cache in /tmp for one day.
     $eventbrite->cache('/tmp', 86400);
 
 Use the `$eventbrite` object to access the API endpoints you want:
