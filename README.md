@@ -21,4 +21,15 @@ To use it, declare your user and app keys:
 
 Then use the `$eventbrite` object to access the API endpoints you want:
 
-    $attendees = Eventbrite->eventListAttendees('1514765705');
+    $attendees = $eventbrite->eventListAttendees('1514765705');
+
+Most responses are more than you need, but you can reformat as desired:
+
+    $attendees = (array)$attendees;
+    foreach ($attendees['attendee'] as $key => $attendee) {
+        $attendees[$key] = array('name' => (string)$attendee->first_name . ' ' . (string)$attendee->last_name,
+                                 'email' => (string)$attendee->email,
+                                 'blog' => (string)$attendee->blog,
+                                 'twitter' => $attendee->answers->answer[0]['answer_text']);
+    }
+    unset($attendees['attendee']);
