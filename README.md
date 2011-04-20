@@ -25,11 +25,11 @@ Then use the `$eventbrite` object to access the API endpoints you want:
 
 Most responses are more than you need, but you can reformat as desired:
 
-    $attendees = (array)$attendees;
-    foreach ($attendees['attendee'] as $key => $attendee) {
-        $attendees[$key] = array('name' => (string)$attendee->first_name . ' ' . (string)$attendee->last_name,
-                                 'email' => (string)$attendee->email,
-                                 'blog' => (string)$attendee->blog,
-                                 'twitter' => $attendee->answers->answer[0]['answer_text']);
+    $original = $attendees;
+    $attendees = array();
+    foreach ($original->attendee as $attendee) {
+        $twitter = (string)$attendee->answers->answer->answer_text;
+        $attendees[$twitter] = array('name' => (string)$attendee->first_name . ' ' . (string)$attendee->last_name,
+                                     'email' => (string)$attendee->email,
+                                     'blog' => (string)$attendee->blog);
     }
-    unset($attendees['attendee']);
