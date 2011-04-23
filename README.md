@@ -11,45 +11,43 @@ Requirements
 Usage
 -----
 
-This library is currently very limited and only supports what we need for the
-Brooklyn Beta web site. Supporting the full API is pretty straightforward, so
-I'm sure I'll get to it eventually.
+Instantiate the `$eventbrite` object and declare the user and app keys:
 
-To use it, declare your user and app keys:
+    $eventbrite = Eventbrite(array('user_key' => $userKey, 'app_key' => $appKey));
 
-    $eventbrite = Eventbrite($userKey, $appKey);
+Although it's not recommended, you can use the user's email address and password
+instead of the user's API key:
+
+    $eventbrite = Eventbrite(array('user' => 'chris@shiflett.org',
+                                   'password' => 'mypass',
+                                   'app_key' => $appKey));
 
 This library caches by default, and you can indicate your preferences for where
 to cache and for how long with the `cache()` method. For example, to cache files
-in `/tmp` for one day:
+in `/tmp` for one day (the default behavior):
 
-    $eventbrite->cache('/tmp', 86400);
+    $eventbrite->cache(array('dir' => '/tmp', 'timeout' => 86400));
 
-Use the `$eventbrite` object to access the API endpoints you want:
+If you want to disable caching for some reason, you can do something like this:
 
-    $attendees = $eventbrite->eventListAttendees('1514765705');
+    $eventbrite->cache(array('dir' => '/dev/null', 'timeout' => 0));
 
-Many responses are more than you need, but you can reformat as desired. For
-example, here's what we do to create a more manageable array of attendees for
-the Brooklyn Beta web site:
+Use the `$eventbrite` object to access any of the API endpoints you want,
+passing all required and any optional arguments:
 
-    $original = $attendees;
+    $attendees = $eventbrite->eventListAttendees(array('id' => '1514765705'));
+
+Many responses are more than you need, but you can reformat them as desired. For
+example, here's what we do to create a simpler and more manageable array of
+attendees for the [Brooklyn Beta](http://brooklynbeta.org/) web site:
+
+    $original = $eventbrite->eventListAttendees(array('id' => '1514765705'));
     $attendees = array();
-    foreach ($original->attendee as $attendee) {
-        // The first answer is the Twitter username.
-        $twitter = (string)$attendee->answers->answer->answer_text;
-        $attendees[$twitter] = array('name' => (string)$attendee->first_name . ' ' . (string)$attendee->last_name,
-                                     'email' => (string)$attendee->email,
-                                     'blog' => (string)$attendee->blog);
+
+    foreach ($original['attendees'] as $attendee) {
+        $attendee = $attendee['attendee'];
+        $twitter = strtolower(trim($attendee['answers'][0]['answer']['answer_text'], ' @'));
+        $attendees[$twitter] = array('name' => "{$attendee['first_name']} {$attendee['last_name']}",
+                                     'email' => $attendee['email'],
+                                     'blog' => $attendee['blog']);
     }
-
-Methods
--------
-
-Only a few of the [API methods](http://developer.eventbrite.com/doc/) are supported. I'll update this list as more are added:
-
-- [eventGet()](http://developer.eventbrite.com/doc/events/event_get/)
-- [eventListAttendees()](http://developer.eventbrite.com/doc/events/event_list_attendees/)
-- [eventListDiscounts()] (http://developer.eventbrite.com/doc/events/event_list_discounts/)
-- [organizerListEvents()](http://developer.eventbrite.com/doc/organizers/organizer_list_events/)
-- [userGet()](http://developer.eventbrite.com/doc/users/user_get/)
