@@ -56,7 +56,7 @@ class Eventbrite
     {
         $json = '';
 
-        if (!empty($file) {
+        if (!empty($file)) {
             if (file_exists($file) && is_readable($file) && (time() - filemtime($file) < $this->cacheTimeout)) {
                 $json = file_get_contents($file);
             } else {
