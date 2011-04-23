@@ -28,9 +28,9 @@ in `/tmp` for one day (the default behavior):
 
     $eventbrite->cache(array('dir' => '/tmp', 'timeout' => 86400));
 
-If you want to disable caching for some reason, you can do something like this:
+If you want to disable caching, set `timeout` to `0`:
 
-    $eventbrite->cache(array('dir' => '/dev/null', 'timeout' => 0));
+    $eventbrite->cache(array('timeout' => 0));
 
 Use the `$eventbrite` object to access any of the API endpoints you want,
 passing all required and any optional arguments:
