@@ -3,97 +3,84 @@
 class Eventbrite
 {
 
-    protected $baseUrl = 'https://www.eventbrite.com/xml/';
-    protected $userKey;
+    const VERSION = '0.9.0';
+
+    protected $baseUrl = 'https://www.eventbrite.com/json/';
+
     protected $appKey;
+    protected $userKey;
+
+    protected $user;
+    protected $password;
 
     // Set default caching properties.
     protected $cacheDir = '/tmp';
     protected $cacheTimeout = 86400;
 
-    public function __construct($userKey, $appKey)
+    public function __construct($args)
     {
-        $this->userKey = $userKey;
-        $this->appKey = $appKey;
+        if (isset($args['app_key'])) {
+            $this->appKey = $args['app_key'];
+        }
+
+        if (isset($args['user_key'])) {
+            $this->userKey = $args['user_key'];
+        }
+
+        if (isset($args['user'])) {
+            $this->user = $args['user'];
+        }
+
+        if (isset($args['password'])) {
+            $this->password = $args['password'];
+        }
     }
 
-    public function cache($dir, $timeout)
+    public function cache($args)
     {
-        $this->cacheDir = $dir;
-        $this->cacheTimeout = $timeout;
+        if (isset($args['dir'])) {
+            $this->cacheDir = $args['dir'];
+        }
+
+        if (isset($args['timeout'])) {
+            $this->cacheTimeout = $args['timeout'];
+        }
     }
 
     protected function request($url, $file)
     {
-        $xml = '';
+        $json = '';
 
         if (file_exists($file) && is_readable($file) && (time() - filemtime($file) < $this->cacheTimeout)) {
-            $xml = file_get_contents($file);
+            $json = file_get_contents($file);
         } else {
-            $xml = file_get_contents($url);
-            file_put_contents($file, $xml);
+            $json = file_get_contents($url);
+            file_put_contents($file, $json);
         }
 
-        return $xml;
+        return $json;
     }
 
-    public function eventGet($id)
-    {
-        // http://developer.eventbrite.com/doc/events/event_get/
+    public function __call($method, $args) {
+        $method = strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $method));
 
-        $url = "{$this->baseUrl}event_get?user_key={$this->userKey}&app_key={$this->appKey}&id={$id}";
-        $file = "{$this->cacheDir}/eventbrite-event-get-{$id}";
-
-        return simplexml_load_string($this->request($url, $file));
-
-    }
-
-    public function eventListAttendees($id)
-    {
-        // http://developer.eventbrite.com/doc/events/event_list_attendees/
-
-        // FIXME: Support optional arguments.
-
-        $url = "{$this->baseUrl}event_list_attendees?user_key={$this->userKey}&app_key={$this->appKey}&id={$id}";
-        $file = "{$this->cacheDir}/eventbrite-event-list-attendees-{$id}";
-
-        return simplexml_load_string($this->request($url, $file));
-    }
-
-    public function eventListDiscounts($id)
-    {
-        // http://developer.eventbrite.com/doc/events/event_list_discounts/
-
-        $url = "{$this->baseUrl}event_list_discounts?user_key={$this->userKey}&app_key={$this->appKey}&id={$id}";
-        $file = "{$this->cacheDir}/eventbrite-event-list-discounts-{$id}";
-
-        return simplexml_load_string($this->request($url, $file));
-    }
-
-    public function organizerListEvents($id)
-    {
-        // http://developer.eventbrite.com/doc/organizers/organizer_list_events/
-
-        $url = "{$this->baseUrl}event_list_discounts?user_key={$this->userKey}&app_key={$this->appKey}&id={$id}";
-        $file = "{$this->cacheDir}/eventbrite-organizer-list-events-{$id}";
-
-        return simplexml_load_string($this->request($url, $file));
-    }
-
-    public function userGet($id)
-    {
-        // http://developer.eventbrite.com/doc/users/user_get/
-
-        // Allow $id to be a user identifier or an email address.
-        if (!ctype_digit($id)) {
-            $url = "{$this->baseUrl}user_get?user_key={$this->userKey}&app_key={$this->appKey}&user_id={$id}";
+        // Prefer user key over email and password.
+        if (isset($this->userKey)) {
+            $url = "{$this->baseUrl}{$method}?user_key={$this->userKey}&app_key={$this->appKey}";
+        } elseif (isset($this->user) && isset($this->password)) {
+            $url = "{$this->baseUrl}{$method}?user={$this->user}&password={$this->password}&app_key={$this->appKey}";
         } else {
-            $url = "{$this->baseUrl}user_get?user_key={$this->userKey}&app_key={$this->appKey}&email={$id}";
+            $url = "{$this->baseUrl}{$method}?app_key={$this->appKey}";
         }
 
-        $file = "{$this->cacheDir}/eventbrite-user-get-{$id}";
+        foreach ($args[0] as $key => $value) {
+            $url .= "&{$key}={$value}";
+        }
 
-        return simplexml_load_string($this->request($url, $file));
+        $hash = md5($url);
+        $file = "{$this->cacheDir}/eventbrite-{$hash}";
+
+        return json_decode($this->request($url, $file), TRUE);
     }
 
 }
