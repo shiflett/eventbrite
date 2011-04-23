@@ -43,7 +43,12 @@ class Eventbrite
         }
 
         if (isset($args['timeout'])) {
-            $this->cacheTimeout = $args['timeout'];
+            if ($args['timeout']) {
+                $this->cacheTimeout = $args['timeout'];
+            } else {
+                $this->cacheDir = '';
+                $this->cacheTimeout = 0;
+            }
         }
     }
 
@@ -51,11 +56,15 @@ class Eventbrite
     {
         $json = '';
 
-        if (file_exists($file) && is_readable($file) && (time() - filemtime($file) < $this->cacheTimeout)) {
-            $json = file_get_contents($file);
+        if (!empty($file) {
+            if (file_exists($file) && is_readable($file) && (time() - filemtime($file) < $this->cacheTimeout)) {
+                $json = file_get_contents($file);
+            } else {
+                $json = file_get_contents($url);
+                file_put_contents($file, $json);
+            }
         } else {
             $json = file_get_contents($url);
-            file_put_contents($file, $json);
         }
 
         return $json;
@@ -85,10 +94,15 @@ class Eventbrite
             case 'get':
             case 'list':
             case 'search':
-                $file = "{$this->cacheDir}/eventbrite-{$hash}";
+                // Check whether caching is disabled.
+                if ($this->cacheTimeout) {
+                    $file = "{$this->cacheDir}/eventbrite-{$hash}";
+                } else {
+                    $file = '';
+                }
                 break;
             default:
-                $file = '/dev/null';
+                $file = '';
                 break;
         }
 
