@@ -78,7 +78,19 @@ class Eventbrite
         }
 
         $hash = md5($url);
-        $file = "{$this->cacheDir}/eventbrite-{$hash}";
+
+        // Only cache read-only stuff.
+        list ($entity, $action) = explode('_', $method);
+        switch ($action) {
+            case 'get':
+            case 'list':
+            case 'search':
+                $file = "{$this->cacheDir}/eventbrite-{$hash}";
+                break;
+            default:
+                $file = '/dev/null';
+                break;
+        }
 
         return json_decode($this->request($url, $file), TRUE);
     }
