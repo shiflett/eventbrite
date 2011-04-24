@@ -17,8 +17,7 @@ class Eventbrite
     protected $cacheDir = '/tmp';
     protected $cacheTimeout = 86400;
 
-    public function __construct($args)
-    {
+    public function __construct($args) {
         if (isset($args['app_key'])) {
             $this->appKey = $args['app_key'];
         }
@@ -36,8 +35,7 @@ class Eventbrite
         }
     }
 
-    public function cache($args)
-    {
+    public function cache($args) {
         if (isset($args['dir'])) {
             $this->cacheDir = $args['dir'];
         }
@@ -52,8 +50,7 @@ class Eventbrite
         }
     }
 
-    protected function request($url, $file)
-    {
+    protected function request($url, $file) {
         $json = '';
 
         if (!empty($file)) {
@@ -90,6 +87,7 @@ class Eventbrite
 
         // Only cache read-only stuff.
         list ($entity, $action) = explode('_', $method);
+        $file = '';
         switch ($action) {
             case 'get':
             case 'list':
@@ -97,12 +95,7 @@ class Eventbrite
                 // Check whether caching is disabled.
                 if ($this->cacheTimeout) {
                     $file = "{$this->cacheDir}/eventbrite-{$hash}";
-                } else {
-                    $file = '';
                 }
-                break;
-            default:
-                $file = '';
                 break;
         }
 
